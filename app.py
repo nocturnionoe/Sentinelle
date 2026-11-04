@@ -5,7 +5,6 @@ from concurrent.futures import ThreadPoolExecutor
 
 # ================================================================
 # CLÉ API FINNHUB
-# En ligne (Streamlit Cloud) : la clé est dans les Secrets.
 # ================================================================
 try:
     API_KEY = st.secrets["FINNHUB_API_KEY"]
@@ -14,9 +13,6 @@ except Exception:
 # ================================================================
 
 
-# ============================================================
-# WATCHLIST : les grandes capitalisations qu'on suit
-# ============================================================
 WATCHLIST = {
     "AAPL":  "Apple",
     "MSFT":  "Microsoft",
@@ -69,9 +65,7 @@ st.markdown(
         border-bottom: 1px solid rgba(255,255,255,0.06);
         margin-bottom: 1.5rem;
     }
-    .brand {
-        display: flex; align-items: center; gap: 0.9rem;
-    }
+    .brand { display: flex; align-items: center; gap: 0.9rem; }
     .logo {
         width: 42px; height: 42px; border-radius: 50%;
         background: linear-gradient(135deg, #1e3a8a, #0ea5e9);
@@ -79,34 +73,25 @@ st.markdown(
         font-size: 1.3rem;
     }
     .brand-name {
-        font-size: 1.4rem; font-weight: 700; letter-spacing: 4px;
-        color: #f8fafc;
+        font-size: 1.4rem; font-weight: 700; letter-spacing: 4px; color: #f8fafc;
     }
     .brand-tag {
         font-size: 0.75rem; color: #64748b;
         text-transform: uppercase; letter-spacing: 2px;
     }
 
-    /* Hero accueil */
-    .accueil-hero {
-        padding: 2rem 0 2.5rem 0;
-    }
+    /* Hero */
+    .accueil-hero { padding: 1.5rem 0 2rem 0; }
     .accueil-titre {
-        font-size: 2.4rem; font-weight: 800; color: #f8fafc;
-        line-height: 1.15; letter-spacing: -1px;
-        margin-bottom: 0.6rem;
+        font-size: 2.2rem; font-weight: 800; color: #f8fafc;
+        line-height: 1.15; letter-spacing: -1px; margin-bottom: 0.6rem;
     }
-    .accueil-subtitre {
-        font-size: 1.05rem; color: #94a3b8;
-        max-width: 600px;
-    }
+    .accueil-subtitre { font-size: 1rem; color: #94a3b8; max-width: 620px; }
 
-    /* Onglets Streamlit */
+    /* Onglets */
     [data-baseweb="tab-list"] {
         background: rgba(255,255,255,0.03);
-        border-radius: 12px;
-        padding: 0.3rem;
-        gap: 0.2rem;
+        border-radius: 12px; padding: 0.3rem; gap: 0.2rem;
         border: 1px solid rgba(255,255,255,0.06);
     }
     [data-baseweb="tab"] {
@@ -114,7 +99,7 @@ st.markdown(
         border-radius: 8px !important;
         color: #94a3b8 !important;
         font-weight: 600 !important;
-        padding: 0.6rem 1.4rem !important;
+        padding: 0.6rem 1.2rem !important;
     }
     [data-baseweb="tab"][aria-selected="true"] {
         background: linear-gradient(135deg, #2563eb, #0ea5e9) !important;
@@ -129,55 +114,10 @@ st.markdown(
         margin: 2rem 0 0.3rem 0;
     }
     .sec-title {
-        font-size: 1.5rem; font-weight: 700; color: #f8fafc;
-        margin-bottom: 1.2rem;
+        font-size: 1.5rem; font-weight: 700; color: #f8fafc; margin-bottom: 1.2rem;
     }
 
-    /* Cartes transactions récentes */
-    .tx-card {
-        background: rgba(255,255,255,0.03);
-        border: 1px solid rgba(255,255,255,0.08);
-        border-radius: 14px;
-        padding: 1.1rem 1.3rem;
-        margin-bottom: 0.7rem;
-        display: grid;
-        grid-template-columns: auto 1fr auto auto;
-        gap: 1rem;
-        align-items: center;
-        transition: all 0.15s;
-    }
-    .tx-card:hover {
-        border-color: rgba(14,165,233,0.3);
-        background: rgba(14,165,233,0.04);
-    }
-    .tx-badge {
-        width: 40px; height: 40px; border-radius: 10px;
-        display: flex; align-items: center; justify-content: center;
-        font-weight: 700; font-size: 1.1rem;
-    }
-    .badge-achat { background: rgba(16,185,129,0.15); color: #10b981; }
-    .badge-vente { background: rgba(239,68,68,0.15); color: #ef4444; }
-
-    .tx-nom { font-weight: 600; color: #f1f5f9; font-size: 0.98rem; }
-    .tx-meta { font-size: 0.8rem; color: #64748b; margin-top: 0.1rem; }
-
-    .tx-ticker {
-        background: rgba(14,165,233,0.12);
-        color: #38bdf8;
-        padding: 0.3rem 0.7rem;
-        border-radius: 8px;
-        font-weight: 700; font-size: 0.85rem;
-        letter-spacing: 1px;
-    }
-
-    .tx-montant {
-        font-weight: 700; color: #f8fafc; font-size: 1.05rem;
-        text-align: right; min-width: 90px;
-    }
-    .tx-sens-vert { color: #10b981; font-size: 0.75rem; }
-    .tx-sens-rouge { color: #ef4444; font-size: 0.75rem; }
-
-    /* Grille KPI */
+    /* KPI */
     .kpi-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
@@ -192,8 +132,7 @@ st.markdown(
     }
     .kpi-lbl {
         font-size: 0.7rem; color: #64748b; font-weight: 600;
-        text-transform: uppercase; letter-spacing: 1.5px;
-        margin-bottom: 0.5rem;
+        text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 0.5rem;
     }
     .kpi-val {
         font-size: 1.7rem; font-weight: 700; color: #f8fafc; line-height: 1.1;
@@ -202,38 +141,53 @@ st.markdown(
     .vert { color: #10b981; }
     .rouge { color: #ef4444; }
 
-    /* Cartes insider / ticker */
-    .entity-card {
-        background: rgba(255,255,255,0.03);
-        border: 1px solid rgba(255,255,255,0.08);
-        border-radius: 14px;
-        padding: 1.1rem 1.2rem;
-        margin-bottom: 0.7rem;
-        display: flex; align-items: center; gap: 1rem;
+    /* Expanders : stylés comme des cartes cliquables */
+    [data-testid="stExpander"] {
+        background: rgba(255,255,255,0.03) !important;
+        border: 1px solid rgba(255,255,255,0.08) !important;
+        border-radius: 14px !important;
+        margin-bottom: 0.7rem !important;
+        transition: all 0.15s;
+        overflow: hidden;
     }
-    .entity-avatar {
-        width: 48px; height: 48px; border-radius: 50%;
-        background: linear-gradient(135deg, #334155, #0f172a);
-        display: flex; align-items: center; justify-content: center;
-        font-weight: 700; font-size: 0.95rem; color: #f8fafc;
-        flex-shrink: 0;
+    [data-testid="stExpander"]:hover {
+        border-color: rgba(14,165,233,0.35) !important;
+        background: rgba(14,165,233,0.04) !important;
     }
-    .entity-avatar.ticker {
-        background: linear-gradient(135deg, #1e3a8a, #0ea5e9);
-        border-radius: 10px;
-        font-size: 0.85rem; letter-spacing: 1px;
+    [data-testid="stExpander"] summary {
+        padding: 1rem 1.3rem !important;
+        font-size: 0.98rem !important;
+        color: #f1f5f9 !important;
+        font-weight: 500 !important;
     }
-    .entity-info { flex: 1; min-width: 0; }
-    .entity-name {
-        font-weight: 600; color: #f1f5f9; font-size: 1.02rem;
-        overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    [data-testid="stExpander"] summary:hover { color: #38bdf8 !important; }
+    [data-testid="stExpander"] [data-testid="stExpanderDetails"] {
+        padding: 0 1.3rem 1.2rem 1.3rem !important;
+        border-top: 1px solid rgba(255,255,255,0.05);
     }
-    .entity-sub { font-size: 0.8rem; color: #64748b; margin-top: 0.15rem; }
-    .entity-right { text-align: right; flex-shrink: 0; }
-    .entity-val { font-size: 1.1rem; font-weight: 700; color: #f8fafc; }
-    .entity-cap { font-size: 0.72rem; color: #64748b; text-transform: uppercase; letter-spacing: 1px; }
 
-    /* Search bar */
+    /* Mini KPI dans un expander */
+    .mini-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+        gap: 0.5rem;
+        margin: 1rem 0;
+    }
+    .mini-kpi {
+        background: rgba(255,255,255,0.03);
+        border-radius: 10px;
+        padding: 0.7rem 0.9rem;
+        border: 1px solid rgba(255,255,255,0.06);
+    }
+    .mini-lbl {
+        font-size: 0.65rem; color: #64748b; font-weight: 600;
+        text-transform: uppercase; letter-spacing: 1px;
+    }
+    .mini-val {
+        font-size: 1.1rem; font-weight: 700; color: #f8fafc; margin-top: 0.2rem;
+    }
+
+    /* Input */
     .stTextInput input {
         background: rgba(255,255,255,0.05) !important;
         color: #f8fafc !important;
@@ -243,7 +197,6 @@ st.markdown(
         font-size: 1.05rem !important;
     }
 
-    /* Boutons */
     .stButton > button {
         background: linear-gradient(135deg, #2563eb, #0ea5e9);
         color: white !important;
@@ -252,22 +205,16 @@ st.markdown(
         font-weight: 600;
     }
 
-    /* DataFrames */
     [data-testid="stDataFrame"] {
         background: rgba(255,255,255,0.02);
-        border-radius: 14px;
+        border-radius: 12px;
         border: 1px solid rgba(255,255,255,0.08);
-        padding: 0.5rem;
     }
 
-    /* Footer */
     .footer-note {
-        margin-top: 3rem;
-        padding-top: 1.5rem;
+        margin-top: 3rem; padding-top: 1.5rem;
         border-top: 1px solid rgba(255,255,255,0.06);
-        text-align: center;
-        font-size: 0.75rem;
-        color: #475569;
+        text-align: center; font-size: 0.75rem; color: #475569;
     }
 
     #MainMenu, footer, header { visibility: hidden; }
@@ -304,23 +251,8 @@ def recuperer_transactions(symbole: str, api_key: str) -> pd.DataFrame:
     return df.sort_values("transactionDate", ascending=False, na_position="last").reset_index(drop=True)
 
 
-@st.cache_data(ttl=600, show_spinner=False)
-def recuperer_profil(symbole: str, api_key: str) -> dict:
-    try:
-        r = requests.get(
-            "https://finnhub.io/api/v1/stock/profile2",
-            params={"symbole": symbole, "token": api_key},
-            timeout=10,
-        )
-        r.raise_for_status()
-        return r.json() or {}
-    except requests.RequestException:
-        return {}
-
-
 @st.cache_data(ttl=600, show_spinner="Chargement des données de marché...")
 def recuperer_toute_watchlist(api_key: str) -> pd.DataFrame:
-    """Récupère en parallèle les transactions de tous les tickers de la watchlist."""
     with ThreadPoolExecutor(max_workers=8) as ex:
         resultats = list(ex.map(lambda t: recuperer_transactions(t, api_key), WATCHLIST.keys()))
     non_vides = [df for df in resultats if not df.empty]
@@ -334,15 +266,6 @@ def recuperer_toute_watchlist(api_key: str) -> pd.DataFrame:
 # ============================================================
 # HELPERS
 # ============================================================
-def initiales(nom: str) -> str:
-    parties = [p for p in nom.replace(",", " ").split() if p]
-    if not parties:
-        return "?"
-    if len(parties) == 1:
-        return parties[0][:2].upper()
-    return (parties[0][0] + parties[-1][0]).upper()
-
-
 def format_nombre(n: float) -> str:
     if abs(n) >= 1_000_000_000:
         return f"{n/1_000_000_000:.2f}Md"
@@ -353,29 +276,108 @@ def format_nombre(n: float) -> str:
     return f"{n:.0f}"
 
 
-def carte_transaction(row) -> str:
-    sens = "achat" if row["change"] > 0 else "vente"
-    badge_cls = "badge-achat" if sens == "achat" else "badge-vente"
-    badge_ico = "▲" if sens == "achat" else "▼"
-    sens_cls = "tx-sens-vert" if sens == "achat" else "tx-sens-rouge"
-    sens_lbl = "ACHAT" if sens == "achat" else "VENTE"
-    date = row["transactionDate"].strftime("%d %b") if pd.notna(row["transactionDate"]) else "—"
-    entreprise = WATCHLIST.get(row["symbol"], row["symbol"])
-    montant = row["montant"]
-    return f"""
-    <div class="tx-card">
-        <div class="tx-badge {badge_cls}">{badge_ico}</div>
-        <div>
-            <div class="tx-nom">{row["name"]}</div>
-            <div class="tx-meta">{entreprise} · {date}</div>
-        </div>
-        <div class="tx-ticker">{row["symbol"]}</div>
-        <div class="tx-montant">
-            ${format_nombre(montant)}
-            <div class="{sens_cls}">{sens_lbl}</div>
-        </div>
-    </div>
-    """
+def date_fr(d) -> str:
+    return d.strftime("%d %b %Y") if pd.notna(d) else "—"
+
+
+def bloc_mini_kpi(items):
+    """items = [(label, value), ...]"""
+    html = '<div class="mini-grid">'
+    for lbl, val in items:
+        html += f'<div class="mini-kpi"><div class="mini-lbl">{lbl}</div><div class="mini-val">{val}</div></div>'
+    html += '</div>'
+    st.markdown(html, unsafe_allow_html=True)
+
+
+def details_transaction(row):
+    """Panneau de détails pour UNE transaction (dans un expander)."""
+    sens = "Achat" if row["change"] > 0 else "Vente"
+    couleur = "🟢" if row["change"] > 0 else "🔴"
+    bloc_mini_kpi([
+        ("Sens", f"{couleur} {sens}"),
+        ("Actions", f"{int(row['change']):+,}"),
+        ("Prix unitaire", f"${row['transactionPrice']:,.2f}"),
+        ("Montant", f"${row['montant']:,.0f}"),
+        ("Détention après op.", f"{int(row['share']):,}"),
+        ("Date", date_fr(row["transactionDate"])),
+    ])
+    nom_ent = WATCHLIST.get(row["symbol"], row["symbol"])
+    st.caption(f"📄 Déclaration officielle SEC (Form 4) · {row['name']} · {nom_ent} ({row['symbol']})")
+
+
+def details_insider(nom: str, df_all: pd.DataFrame):
+    """Panneau de détails pour UN insider : toutes ses transactions."""
+    sous = df_all[df_all["name"] == nom].copy()
+    volume = sous["montant"].sum()
+    nb_tx = len(sous)
+    achats = (sous["change"] > 0).sum()
+    ventes = (sous["change"] < 0).sum()
+    entreprises = ", ".join(sorted(set(sous["symbol"])))
+    net = int(sous["change"].sum())
+
+    bloc_mini_kpi([
+        ("Volume total", f"${format_nombre(volume)}"),
+        ("Transactions", f"{nb_tx}"),
+        ("Achats", f"🟢 {achats}"),
+        ("Ventes", f"🔴 {ventes}"),
+        ("Flux net", f"{net:+,}"),
+        ("Entreprises", entreprises),
+    ])
+
+    tab = pd.DataFrame({
+        "Ticker": sous["symbol"],
+        "Sens": sous["change"].apply(lambda x: "▲ Achat" if x > 0 else "▼ Vente"),
+        "Actions": sous["change"].astype(int).apply(lambda x: f"{x:+,}"),
+        "Prix": sous["transactionPrice"].apply(lambda x: f"${x:,.2f}"),
+        "Montant": sous["montant"].apply(lambda x: f"${x:,.0f}"),
+        "Date": sous["transactionDate"].dt.strftime("%d %b %Y"),
+    })
+    st.dataframe(tab, use_container_width=True, hide_index=True, height=min(300, 50 + 36 * len(tab)))
+
+
+def details_entreprise(symbole: str, df_all: pd.DataFrame):
+    """Panneau de détails pour UNE entreprise."""
+    sous = df_all[df_all["symbol"] == symbole].copy()
+    volume = sous["montant"].sum()
+    nb_tx = len(sous)
+    nb_insiders = sous["name"].nunique()
+    achats = (sous["change"] > 0).sum()
+    ventes = (sous["change"] < 0).sum()
+    net = int(sous["change"].sum())
+
+    bloc_mini_kpi([
+        ("Volume cumulé", f"${format_nombre(volume)}"),
+        ("Transactions", f"{nb_tx}"),
+        ("Dirigeants", f"{nb_insiders}"),
+        ("Achats", f"🟢 {achats}"),
+        ("Ventes", f"🔴 {ventes}"),
+        ("Flux net", f"{net:+,}"),
+    ])
+
+    st.markdown("**Dirigeants impliqués**")
+    top_in = (
+        sous.groupby("name")
+            .agg(nb=("name", "size"), vol=("montant", "sum"))
+            .sort_values("vol", ascending=False)
+            .head(10)
+    )
+    tab_in = pd.DataFrame({
+        "Dirigeant": top_in.index,
+        "Transactions": top_in["nb"].values,
+        "Volume": [f"${format_nombre(v)}" for v in top_in["vol"].values],
+    })
+    st.dataframe(tab_in, use_container_width=True, hide_index=True, height=min(300, 50 + 36 * len(tab_in)))
+
+    st.markdown("**Historique complet**")
+    tab = pd.DataFrame({
+        "Dirigeant": sous["name"],
+        "Sens": sous["change"].apply(lambda x: "▲ Achat" if x > 0 else "▼ Vente"),
+        "Actions": sous["change"].astype(int).apply(lambda x: f"{x:+,}"),
+        "Prix": sous["transactionPrice"].apply(lambda x: f"${x:,.2f}"),
+        "Montant": sous["montant"].apply(lambda x: f"${x:,.0f}"),
+        "Date": sous["transactionDate"].dt.strftime("%d %b %Y"),
+    })
+    st.dataframe(tab, use_container_width=True, hide_index=True, height=min(400, 50 + 36 * len(tab)))
 
 
 # ============================================================
@@ -397,9 +399,6 @@ st.markdown(
 )
 
 
-# ============================================================
-# GARDE
-# ============================================================
 if API_KEY == "A_REMPLIR":
     st.error("⚠️ Clé API Finnhub manquante. Ajoutez `FINNHUB_API_KEY` dans les Secrets de Streamlit Cloud.")
     st.stop()
@@ -421,7 +420,7 @@ with tab_accueil:
         """
         <div class="accueil-hero">
             <div class="accueil-titre">Les mouvements qui comptent,<br>avant tout le monde.</div>
-            <div class="accueil-subtitre">Suivez en temps réel les transactions des dirigeants des plus grandes entreprises cotées — données officielles SEC.</div>
+            <div class="accueil-subtitre">Suivez les transactions des dirigeants des plus grandes entreprises cotées — cliquez sur chaque ligne pour les détails.</div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -432,14 +431,13 @@ with tab_accueil:
     if df_all.empty:
         st.warning("Aucune donnée disponible pour le moment.")
     else:
-        # ---- KPIs globaux ----
         total_tx = len(df_all)
         volume_global = df_all["montant"].sum()
         nb_insiders_uniques = df_all["name"].nunique()
         nb_entreprises = df_all["symbol"].nunique()
-        achats_g = df_all[df_all["change"] > 0]
-        ventes_g = df_all[df_all["change"] < 0]
-        ratio = (len(achats_g) / max(len(ventes_g), 1))
+        achats_g = (df_all["change"] > 0).sum()
+        ventes_g = (df_all["change"] < 0).sum()
+        ratio = (achats_g / max(ventes_g, 1))
 
         st.markdown(
             f"""
@@ -452,38 +450,44 @@ with tab_accueil:
                 <div class="kpi-card">
                     <div class="kpi-lbl">Volume échangé</div>
                     <div class="kpi-val">${format_nombre(volume_global)}</div>
-                    <div class="kpi-sub">cumul sur la watchlist</div>
+                    <div class="kpi-sub">cumul watchlist</div>
                 </div>
                 <div class="kpi-card">
                     <div class="kpi-lbl">Dirigeants actifs</div>
                     <div class="kpi-val">{nb_insiders_uniques}</div>
-                    <div class="kpi-sub">tous tickers confondus</div>
+                    <div class="kpi-sub">tous tickers</div>
                 </div>
                 <div class="kpi-card">
-                    <div class="kpi-lbl">Ratio Achats / Ventes</div>
+                    <div class="kpi-lbl">Ratio Achats/Ventes</div>
                     <div class="kpi-val">{ratio:.2f}</div>
-                    <div class="kpi-sub"><span class="vert">▲ {len(achats_g)}</span> · <span class="rouge">▼ {len(ventes_g)}</span></div>
+                    <div class="kpi-sub"><span class="vert">▲ {achats_g}</span> · <span class="rouge">▼ {ventes_g}</span></div>
                 </div>
             </div>
             """,
             unsafe_allow_html=True,
         )
 
-        # ---- Gros mouvements récents ----
+        # --- Gros mouvements récents ---
         st.markdown('<div class="sec-eyebrow">— À la une</div>', unsafe_allow_html=True)
         st.markdown('<div class="sec-title">🔥 Gros mouvements récents</div>', unsafe_allow_html=True)
 
-        gros = df_all.sort_values("montant", ascending=False).head(8)
-        for _, row in gros.iterrows():
-            st.markdown(carte_transaction(row), unsafe_allow_html=True)
+        gros = df_all.sort_values("montant", ascending=False).head(10).reset_index(drop=True)
+        for i, row in gros.iterrows():
+            flag = "🟢 ACHAT" if row["change"] > 0 else "🔴 VENTE"
+            label = f"{flag}  ·  {row['name']}  ·  {row['symbol']}  ·  ${format_nombre(row['montant'])}  ·  {date_fr(row['transactionDate'])}"
+            with st.expander(label):
+                details_transaction(row)
 
-        # ---- Dernières transactions ----
+        # --- Dernières déclarations ---
         st.markdown('<div class="sec-eyebrow">— Flux en direct</div>', unsafe_allow_html=True)
         st.markdown('<div class="sec-title">⏱️ Dernières déclarations</div>', unsafe_allow_html=True)
 
-        recents = df_all.dropna(subset=["transactionDate"]).sort_values("transactionDate", ascending=False).head(8)
-        for _, row in recents.iterrows():
-            st.markdown(carte_transaction(row), unsafe_allow_html=True)
+        recents = df_all.dropna(subset=["transactionDate"]).sort_values("transactionDate", ascending=False).head(10).reset_index(drop=True)
+        for i, row in recents.iterrows():
+            flag = "🟢" if row["change"] > 0 else "🔴"
+            label = f"{flag}  {date_fr(row['transactionDate'])}  ·  {row['name']}  ·  {row['symbol']}  ·  ${format_nombre(row['montant'])}"
+            with st.expander(label):
+                details_transaction(row)
 
 
 # ============================================================
@@ -494,7 +498,7 @@ with tab_insiders:
         """
         <div class="accueil-hero">
             <div class="accueil-titre">Les grands noms.</div>
-            <div class="accueil-subtitre">Dirigeants les plus actifs sur la watchlist, classés par volume de transactions.</div>
+            <div class="accueil-subtitre">Cliquez sur un dirigeant pour voir le détail de toutes ses opérations.</div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -511,31 +515,16 @@ with tab_insiders:
                       nb_tx=("name", "size"),
                       volume=("montant", "sum"),
                       entreprises=("symbol", lambda s: ", ".join(sorted(set(s)))),
-                      derniere=("transactionDate", "max"),
                   )
                   .sort_values("volume", ascending=False)
-                  .head(20)
+                  .head(25)
                   .reset_index()
         )
 
         for _, row in top_insiders.iterrows():
-            derniere = row["derniere"].strftime("%d %b %Y") if pd.notna(row["derniere"]) else "—"
-            st.markdown(
-                f"""
-                <div class="entity-card">
-                    <div class="entity-avatar">{initiales(row["name"])}</div>
-                    <div class="entity-info">
-                        <div class="entity-name">{row["name"]}</div>
-                        <div class="entity-sub">{row["entreprises"]} · dernière op. {derniere}</div>
-                    </div>
-                    <div class="entity-right">
-                        <div class="entity-val">${format_nombre(row["volume"])}</div>
-                        <div class="entity-cap">{row["nb_tx"]} transactions</div>
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+            label = f"👤  {row['name']}  ·  {row['entreprises']}  ·  ${format_nombre(row['volume'])}  ·  {row['nb_tx']} tx"
+            with st.expander(label):
+                details_insider(row["name"], df_all)
 
 
 # ============================================================
@@ -546,7 +535,7 @@ with tab_tickers:
         """
         <div class="accueil-hero">
             <div class="accueil-titre">Watchlist.</div>
-            <div class="accueil-subtitre">Les entreprises suivies et leur activité insider récente.</div>
+            <div class="accueil-subtitre">Cliquez sur une entreprise pour voir son activité insider détaillée.</div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -563,7 +552,6 @@ with tab_tickers:
                       nb_tx=("symbol", "size"),
                       volume=("montant", "sum"),
                       nb_insiders=("name", "nunique"),
-                      derniere=("transactionDate", "max"),
                   )
                   .sort_values("volume", ascending=False)
                   .reset_index()
@@ -571,34 +559,20 @@ with tab_tickers:
 
         for _, row in par_entreprise.iterrows():
             nom = WATCHLIST.get(row["symbol"], row["symbol"])
-            derniere = row["derniere"].strftime("%d %b %Y") if pd.notna(row["derniere"]) else "—"
-            st.markdown(
-                f"""
-                <div class="entity-card">
-                    <div class="entity-avatar ticker">{row["symbol"]}</div>
-                    <div class="entity-info">
-                        <div class="entity-name">{nom}</div>
-                        <div class="entity-sub">{row["nb_insiders"]} dirigeants · dernière op. {derniere}</div>
-                    </div>
-                    <div class="entity-right">
-                        <div class="entity-val">${format_nombre(row["volume"])}</div>
-                        <div class="entity-cap">{row["nb_tx"]} transactions</div>
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+            label = f"🏢  {row['symbol']}  ·  {nom}  ·  ${format_nombre(row['volume'])}  ·  {row['nb_insiders']} dirigeants  ·  {row['nb_tx']} tx"
+            with st.expander(label):
+                details_entreprise(row["symbol"], df_all)
 
 
 # ============================================================
-# RECHERCHE PAR TICKER
+# RECHERCHE
 # ============================================================
 with tab_recherche:
     st.markdown(
         """
         <div class="accueil-hero">
-            <div class="accueil-titre">Analyse ticker.</div>
-            <div class="accueil-subtitre">Saisissez un symbole boursier pour voir l'activité complète de ses dirigeants.</div>
+            <div class="accueil-titre">Analyse d'un ticker.</div>
+            <div class="accueil-subtitre">Saisissez un symbole boursier (pas forcément dans la watchlist) pour voir toute son activité insider.</div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -628,15 +602,14 @@ with tab_recherche:
         st.warning(f"Aucune transaction trouvée pour **{ticker}**.")
         st.stop()
 
-    # KPIs par ticker
     nb_tx = len(df)
     nb_in = df["name"].nunique()
     vol = df["montant"].sum()
     net = int(df["change"].sum())
-    achats_t = df[df["change"] > 0]
-    ventes_t = df[df["change"] < 0]
+    achats_t = (df["change"] > 0).sum()
+    ventes_t = (df["change"] < 0).sum()
     derniere = df["transactionDate"].max()
-    derniere_str = derniere.strftime("%d %b %Y") if pd.notna(derniere) else "—"
+    derniere_str = date_fr(derniere)
     sens_cls = "vert" if net >= 0 else "rouge"
     sens_signe = "+" if net >= 0 else ""
 
@@ -646,7 +619,7 @@ with tab_recherche:
             <div class="kpi-card">
                 <div class="kpi-lbl">Transactions</div>
                 <div class="kpi-val">{nb_tx}</div>
-                <div class="kpi-sub"><span class="vert">▲ {len(achats_t)}</span> · <span class="rouge">▼ {len(ventes_t)}</span></div>
+                <div class="kpi-sub"><span class="vert">▲ {achats_t}</span> · <span class="rouge">▼ {ventes_t}</span></div>
             </div>
             <div class="kpi-card">
                 <div class="kpi-lbl">Dirigeants</div>
@@ -673,19 +646,14 @@ with tab_recherche:
         unsafe_allow_html=True,
     )
 
-    # Historique
-    st.markdown('<div class="sec-eyebrow">— Historique complet</div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="sec-title">Transactions {ticker}</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sec-eyebrow">— Transactions</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="sec-title">Cliquez sur une opération pour les détails</div>', unsafe_allow_html=True)
 
-    historique = pd.DataFrame({
-        "Dirigeant": df["name"],
-        "Sens": df["change"].apply(lambda x: "▲ Achat" if x > 0 else "▼ Vente"),
-        "Actions": df["change"].astype(int).apply(lambda x: f"{x:+,}"),
-        "Prix": df["transactionPrice"].apply(lambda x: f"${x:,.2f}"),
-        "Montant": df["montant"].apply(lambda x: f"${x:,.0f}"),
-        "Date": df["transactionDate"].dt.strftime("%d %b %Y"),
-    })
-    st.dataframe(historique, use_container_width=True, hide_index=True, height=420)
+    for _, row in df.iterrows():
+        flag = "🟢 ACHAT" if row["change"] > 0 else "🔴 VENTE"
+        label = f"{flag}  ·  {row['name']}  ·  ${format_nombre(row['montant'])}  ·  {date_fr(row['transactionDate'])}"
+        with st.expander(label):
+            details_transaction(row)
 
 
 # ============================================================
