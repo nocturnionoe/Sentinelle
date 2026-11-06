@@ -4,7 +4,7 @@ import pandas as pd
 from concurrent.futures import ThreadPoolExecutor
 
 # ================================================================
-# CLÉ API FINNHUB
+# CLÉ API FINNHUB (via Streamlit Secrets)
 # ================================================================
 try:
     API_KEY = st.secrets["FINNHUB_API_KEY"]
@@ -12,28 +12,18 @@ except Exception:
     API_KEY = "A_REMPLIR"
 # ================================================================
 
+BARGO_BASE = "https://www.bargo.ai/free-apis/congress/v1"
 
+# Watchlist élargie — ~30 grandes capitalisations US
 WATCHLIST = {
-    "AAPL":  "Apple",
-    "MSFT":  "Microsoft",
-    "GOOGL": "Alphabet",
-    "AMZN":  "Amazon",
-    "META":  "Meta",
-    "TSLA":  "Tesla",
-    "NVDA":  "NVIDIA",
-    "JPM":   "JPMorgan Chase",
-    "V":     "Visa",
-    "WMT":   "Walmart",
-    "JNJ":   "Johnson & Johnson",
-    "XOM":   "Exxon Mobil",
-    "BAC":   "Bank of America",
-    "DIS":   "Walt Disney",
-    "NFLX":  "Netflix",
-    "KO":    "Coca-Cola",
-    "PEP":   "PepsiCo",
-    "ORCL":  "Oracle",
-    "CRM":   "Salesforce",
-    "AMD":   "AMD",
+    "AAPL": "Apple", "MSFT": "Microsoft", "GOOGL": "Alphabet", "AMZN": "Amazon",
+    "META": "Meta", "TSLA": "Tesla", "NVDA": "NVIDIA", "JPM": "JPMorgan Chase",
+    "V": "Visa", "WMT": "Walmart", "JNJ": "Johnson & Johnson", "XOM": "Exxon Mobil",
+    "BAC": "Bank of America", "DIS": "Walt Disney", "NFLX": "Netflix", "KO": "Coca-Cola",
+    "PEP": "PepsiCo", "ORCL": "Oracle", "CRM": "Salesforce", "AMD": "AMD",
+    "INTC": "Intel", "CSCO": "Cisco", "IBM": "IBM", "GS": "Goldman Sachs",
+    "MS": "Morgan Stanley", "BA": "Boeing", "MCD": "McDonald's", "NKE": "Nike",
+    "COST": "Costco", "PG": "Procter & Gamble", "UNH": "UnitedHealth",
 }
 
 
@@ -46,178 +36,364 @@ st.set_page_config(
 
 
 # ============================================================
-# STYLE
+# STYLE — typographie Inter, palette raffinée, moins "fait par IA"
 # ============================================================
 st.markdown(
     """
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
     <style>
+    :root {
+      --bg: #050812;
+      --bg-grad-1: #0d1326;
+      --bg-grad-2: #050812;
+      --card: #0e1424;
+      --card-hover: #121a2e;
+      --border: rgba(255,255,255,0.06);
+      --border-hover: rgba(99,196,255,0.25);
+      --txt: #e8ecf5;
+      --txt-muted: #7a8599;
+      --txt-dim: #4a556b;
+      --accent: #63c4ff;
+      --accent-2: #5b8def;
+      --green: #22c55e;
+      --red: #f43f5e;
+      --gold: #f0b429;
+    }
+
+    html, body, [class*="css"], .stApp, button, input, textarea {
+        font-family: 'Inter', -apple-system, sans-serif !important;
+        font-feature-settings: 'cv11', 'ss01', 'ss03';
+        letter-spacing: -0.01em;
+    }
+
     .stApp {
-        background: radial-gradient(ellipse at top, #0f1729 0%, #060912 60%);
-        color: #e2e8f0;
+        background:
+            radial-gradient(1200px 600px at 20% -10%, rgba(91,141,239,0.12), transparent 60%),
+            radial-gradient(900px 500px at 90% 0%, rgba(99,196,255,0.08), transparent 55%),
+            linear-gradient(180deg, var(--bg-grad-1) 0%, var(--bg-grad-2) 100%);
+        color: var(--txt);
     }
     [data-testid="stHeader"] { background: transparent; }
-    .block-container { padding-top: 1.5rem; max-width: 1100px; }
+    .block-container { padding-top: 1.2rem; max-width: 1180px; }
 
-    /* Header */
+    /* ===== HEADER ===== */
     .app-header {
         display: flex; align-items: center; justify-content: space-between;
-        padding: 0.3rem 0 1.5rem 0;
-        border-bottom: 1px solid rgba(255,255,255,0.06);
-        margin-bottom: 1.5rem;
+        padding: 0.4rem 0 1.4rem 0;
+        margin-bottom: 1rem;
     }
-    .brand { display: flex; align-items: center; gap: 0.9rem; }
-    .logo {
-        width: 42px; height: 42px; border-radius: 50%;
-        background: linear-gradient(135deg, #1e3a8a, #0ea5e9);
+    .brand { display: flex; align-items: center; gap: 0.85rem; }
+    .brand-logo {
+        width: 38px; height: 38px;
         display: flex; align-items: center; justify-content: center;
-        font-size: 1.3rem;
+        background: linear-gradient(135deg, #1a2447 0%, #0b1024 100%);
+        border: 1px solid rgba(99,196,255,0.3);
+        border-radius: 10px;
+        box-shadow: 0 0 20px rgba(99,196,255,0.15);
     }
     .brand-name {
-        font-size: 1.4rem; font-weight: 700; letter-spacing: 4px; color: #f8fafc;
+        font-size: 1.1rem; font-weight: 800; letter-spacing: 5px; color: #f8fafc;
     }
     .brand-tag {
-        font-size: 0.75rem; color: #64748b;
+        font-size: 0.68rem; color: var(--txt-muted);
+        text-transform: uppercase; letter-spacing: 2.5px; font-weight: 600;
+    }
+    .status-pill {
+        display: inline-flex; align-items: center; gap: 0.4rem;
+        padding: 0.35rem 0.75rem;
+        background: rgba(34,197,94,0.1);
+        border: 1px solid rgba(34,197,94,0.25);
+        border-radius: 999px;
+        font-size: 0.72rem; font-weight: 600; color: var(--green);
+        letter-spacing: 0.5px;
+    }
+    .status-dot {
+        width: 6px; height: 6px; border-radius: 50%;
+        background: var(--green);
+        box-shadow: 0 0 10px var(--green);
+        animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.4; }
+    }
+
+    /* ===== HERO ===== */
+    .hero {
+        padding: 1.5rem 0 2.2rem 0;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 2rem;
+    }
+    .hero-eyebrow {
+        display: inline-block;
+        padding: 0.3rem 0.75rem;
+        background: rgba(99,196,255,0.08);
+        border: 1px solid rgba(99,196,255,0.2);
+        border-radius: 999px;
+        font-size: 0.68rem; font-weight: 600; color: var(--accent);
         text-transform: uppercase; letter-spacing: 2px;
+        margin-bottom: 1rem;
+    }
+    .hero-title {
+        font-size: 2.6rem; font-weight: 800; color: #f8fafc;
+        line-height: 1.1; letter-spacing: -0.03em;
+        margin-bottom: 0.7rem;
+    }
+    .hero-sub {
+        font-size: 1.02rem; color: var(--txt-muted);
+        max-width: 640px; line-height: 1.55;
     }
 
-    /* Hero */
-    .accueil-hero { padding: 1.5rem 0 2rem 0; }
-    .accueil-titre {
-        font-size: 2.2rem; font-weight: 800; color: #f8fafc;
-        line-height: 1.15; letter-spacing: -1px; margin-bottom: 0.6rem;
-    }
-    .accueil-subtitre { font-size: 1rem; color: #94a3b8; max-width: 620px; }
-
-    /* Onglets */
+    /* ===== ONGLETS ===== */
     [data-baseweb="tab-list"] {
-        background: rgba(255,255,255,0.03);
-        border-radius: 12px; padding: 0.3rem; gap: 0.2rem;
-        border: 1px solid rgba(255,255,255,0.06);
+        background: rgba(10,15,30,0.5);
+        backdrop-filter: blur(10px);
+        border-radius: 14px; padding: 0.35rem;
+        gap: 0.15rem;
+        border: 1px solid var(--border);
     }
     [data-baseweb="tab"] {
         background: transparent !important;
-        border-radius: 8px !important;
-        color: #94a3b8 !important;
+        border-radius: 10px !important;
+        color: var(--txt-muted) !important;
         font-weight: 600 !important;
-        padding: 0.6rem 1.2rem !important;
+        font-size: 0.92rem !important;
+        padding: 0.65rem 1.1rem !important;
+        transition: all 0.15s;
     }
+    [data-baseweb="tab"]:hover { color: var(--txt) !important; }
     [data-baseweb="tab"][aria-selected="true"] {
-        background: linear-gradient(135deg, #2563eb, #0ea5e9) !important;
-        color: white !important;
+        background: linear-gradient(135deg, rgba(99,196,255,0.18), rgba(91,141,239,0.15)) !important;
+        color: #f8fafc !important;
+        box-shadow: inset 0 0 0 1px rgba(99,196,255,0.25);
     }
     [data-baseweb="tab-highlight"], [data-baseweb="tab-border"] { display: none !important; }
 
-    /* Titres section */
-    .sec-eyebrow {
-        font-size: 0.72rem; font-weight: 700; color: #0ea5e9;
-        text-transform: uppercase; letter-spacing: 2.5px;
-        margin: 2rem 0 0.3rem 0;
+    /* ===== SECTIONS ===== */
+    .section-head {
+        display: flex; align-items: baseline; justify-content: space-between;
+        margin: 2.5rem 0 1rem 0;
     }
-    .sec-title {
-        font-size: 1.5rem; font-weight: 700; color: #f8fafc; margin-bottom: 1.2rem;
+    .section-title {
+        font-size: 1.35rem; font-weight: 700; color: #f1f5f9;
+        letter-spacing: -0.02em;
+    }
+    .section-meta {
+        font-size: 0.78rem; color: var(--txt-muted); font-weight: 500;
     }
 
-    /* KPI */
-    .kpi-grid {
+    /* ===== STAT TILES (grosses KPI) ===== */
+    .stat-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
         gap: 0.9rem;
-        margin: 0.5rem 0 2rem 0;
+        margin-bottom: 1rem;
     }
-    .kpi-card {
-        background: rgba(255,255,255,0.03);
-        border: 1px solid rgba(255,255,255,0.08);
+    .stat-tile {
+        background: var(--card);
+        border: 1px solid var(--border);
         border-radius: 14px;
-        padding: 1.1rem 1.2rem;
+        padding: 1.1rem 1.25rem;
+        position: relative;
+        overflow: hidden;
     }
-    .kpi-lbl {
-        font-size: 0.7rem; color: #64748b; font-weight: 600;
-        text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 0.5rem;
+    .stat-tile::before {
+        content: ''; position: absolute; left: 0; top: 0; height: 2px; width: 100%;
+        background: linear-gradient(90deg, var(--accent), transparent);
+        opacity: 0.5;
     }
-    .kpi-val {
-        font-size: 1.7rem; font-weight: 700; color: #f8fafc; line-height: 1.1;
+    .stat-tile-label {
+        font-size: 0.68rem; color: var(--txt-muted); font-weight: 600;
+        text-transform: uppercase; letter-spacing: 1.5px;
+        margin-bottom: 0.65rem;
     }
-    .kpi-sub { font-size: 0.78rem; color: #64748b; margin-top: 0.3rem; }
-    .vert { color: #10b981; }
-    .rouge { color: #ef4444; }
+    .stat-tile-value {
+        font-size: 1.75rem; font-weight: 700; color: #f8fafc;
+        line-height: 1.05; font-family: 'Inter', sans-serif;
+        letter-spacing: -0.02em;
+    }
+    .stat-tile-delta {
+        font-size: 0.76rem; color: var(--txt-muted); margin-top: 0.35rem;
+    }
+    .pos { color: var(--green); }
+    .neg { color: var(--red); }
 
-    /* Expanders : stylés comme des cartes cliquables */
+    /* ===== LIGNES (type row) ===== */
+    .row {
+        display: grid;
+        grid-template-columns: auto 1fr auto auto;
+        gap: 0.9rem; align-items: center;
+        padding: 0.95rem 1rem;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        margin-bottom: 0.5rem;
+        transition: all 0.12s;
+    }
+    .row:hover {
+        border-color: var(--border-hover);
+        background: var(--card-hover);
+        transform: translateY(-1px);
+    }
+    .row-icon {
+        width: 36px; height: 36px; border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 700; font-size: 0.85rem;
+        flex-shrink: 0;
+    }
+    .ico-buy { background: rgba(34,197,94,0.14); color: var(--green); }
+    .ico-sell { background: rgba(244,63,94,0.14); color: var(--red); }
+    .ico-house { background: rgba(240,180,41,0.14); color: var(--gold); }
+    .ico-senate { background: rgba(99,196,255,0.14); color: var(--accent); }
+
+    .row-main {
+        min-width: 0;
+    }
+    .row-name {
+        font-weight: 600; color: #f1f5f9; font-size: 0.96rem;
+        overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .row-sub {
+        font-size: 0.78rem; color: var(--txt-muted); margin-top: 0.15rem;
+    }
+    .row-chip {
+        padding: 0.35rem 0.6rem; border-radius: 8px;
+        background: rgba(255,255,255,0.05);
+        color: var(--accent);
+        font-size: 0.75rem; font-weight: 700;
+        font-family: 'JetBrains Mono', monospace;
+        letter-spacing: 0.5px;
+    }
+    .row-amount {
+        font-size: 0.98rem; font-weight: 700; color: #f8fafc;
+        font-family: 'JetBrains Mono', monospace;
+        text-align: right; min-width: 95px;
+    }
+    .row-date {
+        font-size: 0.72rem; color: var(--txt-muted);
+        font-weight: 500; text-align: right; margin-top: 0.15rem;
+    }
+
+    /* ===== EXPANDERS (drill-down) ===== */
     [data-testid="stExpander"] {
-        background: rgba(255,255,255,0.03) !important;
-        border: 1px solid rgba(255,255,255,0.08) !important;
-        border-radius: 14px !important;
-        margin-bottom: 0.7rem !important;
-        transition: all 0.15s;
+        background: var(--card) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 12px !important;
+        margin-bottom: 0.55rem !important;
+        transition: all 0.12s;
         overflow: hidden;
     }
     [data-testid="stExpander"]:hover {
-        border-color: rgba(14,165,233,0.35) !important;
-        background: rgba(14,165,233,0.04) !important;
+        border-color: var(--border-hover) !important;
+        background: var(--card-hover) !important;
     }
     [data-testid="stExpander"] summary {
-        padding: 1rem 1.3rem !important;
-        font-size: 0.98rem !important;
+        padding: 0.95rem 1.1rem !important;
         color: #f1f5f9 !important;
         font-weight: 500 !important;
+        font-size: 0.93rem !important;
     }
-    [data-testid="stExpander"] summary:hover { color: #38bdf8 !important; }
     [data-testid="stExpander"] [data-testid="stExpanderDetails"] {
-        padding: 0 1.3rem 1.2rem 1.3rem !important;
-        border-top: 1px solid rgba(255,255,255,0.05);
+        padding: 0.3rem 1.1rem 1.1rem 1.1rem !important;
+        border-top: 1px solid var(--border);
     }
 
-    /* Mini KPI dans un expander */
+    /* ===== MINI KPIs dans expander ===== */
     .mini-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-        gap: 0.5rem;
-        margin: 1rem 0;
+        gap: 0.5rem; margin: 0.9rem 0 1rem 0;
     }
-    .mini-kpi {
-        background: rgba(255,255,255,0.03);
+    .mini {
+        background: rgba(255,255,255,0.02);
+        border: 1px solid var(--border);
         border-radius: 10px;
-        padding: 0.7rem 0.9rem;
-        border: 1px solid rgba(255,255,255,0.06);
+        padding: 0.65rem 0.85rem;
     }
     .mini-lbl {
-        font-size: 0.65rem; color: #64748b; font-weight: 600;
-        text-transform: uppercase; letter-spacing: 1px;
+        font-size: 0.65rem; color: var(--txt-muted); font-weight: 600;
+        text-transform: uppercase; letter-spacing: 1.2px;
     }
     .mini-val {
-        font-size: 1.1rem; font-weight: 700; color: #f8fafc; margin-top: 0.2rem;
+        font-size: 1.05rem; font-weight: 700; color: #f8fafc; margin-top: 0.2rem;
+        font-family: 'JetBrains Mono', monospace;
     }
 
-    /* Input */
-    .stTextInput input {
-        background: rgba(255,255,255,0.05) !important;
-        color: #f8fafc !important;
-        border: 1px solid rgba(255,255,255,0.1) !important;
-        border-radius: 10px !important;
-        padding: 0.7rem 1rem !important;
-        font-size: 1.05rem !important;
-    }
-
-    .stButton > button {
-        background: linear-gradient(135deg, #2563eb, #0ea5e9);
-        color: white !important;
-        border: none !important;
-        border-radius: 10px;
-        font-weight: 600;
-    }
-
-    [data-testid="stDataFrame"] {
+    /* ===== TRANSACTIONS COMPACTES (dans detail) ===== */
+    .tx-item {
+        display: grid;
+        grid-template-columns: 30px 1fr auto auto;
+        gap: 0.7rem; align-items: center;
+        padding: 0.65rem 0.8rem;
         background: rgba(255,255,255,0.02);
-        border-radius: 12px;
-        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 8px;
+        margin-bottom: 0.3rem;
+        font-size: 0.85rem;
+    }
+    .tx-arrow { font-weight: 700; font-size: 0.95rem; }
+    .tx-info { color: #e2e8f0; font-weight: 500; }
+    .tx-info-sub { color: var(--txt-muted); font-size: 0.72rem; margin-top: 0.1rem; }
+    .tx-amt {
+        color: #f8fafc; font-weight: 700;
+        font-family: 'JetBrains Mono', monospace;
+    }
+    .tx-ticker-sm {
+        background: rgba(99,196,255,0.1);
+        color: var(--accent);
+        padding: 0.2rem 0.5rem; border-radius: 6px;
+        font-size: 0.72rem; font-weight: 700;
+        font-family: 'JetBrains Mono', monospace;
     }
 
-    .footer-note {
-        margin-top: 3rem; padding-top: 1.5rem;
-        border-top: 1px solid rgba(255,255,255,0.06);
-        text-align: center; font-size: 0.75rem; color: #475569;
+    /* ===== INPUTS / BOUTONS ===== */
+    .stTextInput input {
+        background: var(--card) !important;
+        color: var(--txt) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 10px !important;
+        padding: 0.75rem 1rem !important;
+        font-size: 1rem !important;
+        font-family: 'Inter', sans-serif !important;
+    }
+    .stTextInput input:focus { border-color: var(--accent) !important; }
+    .stButton > button {
+        background: linear-gradient(135deg, #5b8def, #63c4ff) !important;
+        color: white !important; border: none !important;
+        border-radius: 10px; font-weight: 600;
+        padding: 0.65rem 1.2rem;
+    }
+
+    /* ===== CHARTS ===== */
+    [data-testid="stVegaLiteChart"], [data-testid="stAltairChart"] {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 0.8rem;
+    }
+
+    /* ===== FOOTER ===== */
+    .footer {
+        margin-top: 4rem; padding: 2rem 0 1rem 0;
+        border-top: 1px solid var(--border);
+        text-align: center; color: var(--txt-dim);
+        font-size: 0.75rem;
+    }
+    .footer-brand {
+        font-weight: 700; letter-spacing: 3px; color: var(--txt-muted);
+        margin-bottom: 0.6rem;
     }
 
     #MainMenu, footer, header { visibility: hidden; }
+
+    /* Scrollbar discrète */
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb {
+        background: rgba(255,255,255,0.08);
+        border-radius: 10px;
+    }
     </style>
     """,
     unsafe_allow_html=True,
@@ -225,15 +401,14 @@ st.markdown(
 
 
 # ============================================================
-# API
+# API — FINNHUB (dirigeants d'entreprise)
 # ============================================================
-@st.cache_data(ttl=600, show_spinner=False)
-def recuperer_transactions(symbole: str, api_key: str) -> pd.DataFrame:
+@st.cache_data(ttl=1800, show_spinner=False)
+def fetch_insider_tx(symbol: str, api_key: str) -> pd.DataFrame:
     try:
         r = requests.get(
             "https://finnhub.io/api/v1/stock/insider-transactions",
-            params={"symbol": symbole, "token": api_key},
-            timeout=10,
+            params={"symbol": symbol, "token": api_key}, timeout=10,
         )
         r.raise_for_status()
         data = r.json().get("data", [])
@@ -247,137 +422,170 @@ def recuperer_transactions(symbole: str, api_key: str) -> pd.DataFrame:
     df["change"] = pd.to_numeric(df.get("change"), errors="coerce").fillna(0)
     df["share"] = pd.to_numeric(df.get("share"), errors="coerce").fillna(0)
     df["montant"] = df["change"].abs() * df["transactionPrice"]
-    df["symbol"] = symbole
+    df["symbol"] = symbol
     return df.sort_values("transactionDate", ascending=False, na_position="last").reset_index(drop=True)
 
 
-@st.cache_data(ttl=600, show_spinner="Chargement des données de marché...")
-def recuperer_toute_watchlist(api_key: str) -> pd.DataFrame:
-    with ThreadPoolExecutor(max_workers=8) as ex:
-        resultats = list(ex.map(lambda t: recuperer_transactions(t, api_key), WATCHLIST.keys()))
-    non_vides = [df for df in resultats if not df.empty]
-    if not non_vides:
+@st.cache_data(ttl=1800, show_spinner="Chargement des dirigeants d'entreprise…")
+def fetch_all_insiders(api_key: str) -> pd.DataFrame:
+    with ThreadPoolExecutor(max_workers=10) as ex:
+        results = list(ex.map(lambda t: fetch_insider_tx(t, api_key), WATCHLIST.keys()))
+    non_empty = [df for df in results if not df.empty]
+    if not non_empty:
         return pd.DataFrame()
-    agg = pd.concat(non_vides, ignore_index=True)
+    agg = pd.concat(non_empty, ignore_index=True)
     agg["entreprise"] = agg["symbol"].map(WATCHLIST)
     return agg
 
 
 # ============================================================
+# API — BARGO (élus US, Congrès)
+# ============================================================
+@st.cache_data(ttl=3600, show_spinner="Chargement des trades du Congrès US…")
+def fetch_congress_trades(limit: int = 100) -> pd.DataFrame:
+    try:
+        r = requests.get(f"{BARGO_BASE}/trades", params={"limit": limit}, timeout=15)
+        r.raise_for_status()
+        trades = r.json().get("trades", [])
+    except requests.RequestException:
+        return pd.DataFrame()
+    if not trades:
+        return pd.DataFrame()
+    df = pd.DataFrame(trades)
+    df["transaction_date"] = pd.to_datetime(df.get("transaction_date"), errors="coerce")
+    df["disclosure_date"] = pd.to_datetime(df.get("disclosure_date"), errors="coerce")
+    # Montant estimé : milieu de la fourchette
+    def mid_range(s):
+        if not isinstance(s, str):
+            return 0.0
+        s = s.replace("$", "").replace(",", "").replace("+", "").strip()
+        if "-" in s:
+            a, b = s.split("-", 1)
+            try: return (float(a.strip()) + float(b.strip())) / 2
+            except: return 0.0
+        try: return float(s)
+        except: return 0.0
+    df["montant_est"] = df.get("amount_range", "").apply(mid_range)
+    return df.sort_values("transaction_date", ascending=False, na_position="last").reset_index(drop=True)
+
+
+# ============================================================
 # HELPERS
 # ============================================================
-def format_nombre(n: float) -> str:
-    if abs(n) >= 1_000_000_000:
-        return f"{n/1_000_000_000:.2f}Md"
-    if abs(n) >= 1_000_000:
-        return f"{n/1_000_000:.2f}M"
-    if abs(n) >= 1_000:
-        return f"{n/1_000:.1f}k"
+def fmt_num(n: float) -> str:
+    if n is None or pd.isna(n):
+        return "—"
+    n = float(n)
+    if abs(n) >= 1e9: return f"{n/1e9:.2f}Md"
+    if abs(n) >= 1e6: return f"{n/1e6:.2f}M"
+    if abs(n) >= 1e3: return f"{n/1e3:.1f}k"
     return f"{n:.0f}"
 
 
-def date_fr(d) -> str:
-    return d.strftime("%d %b %Y") if pd.notna(d) else "—"
+def fmt_date(d) -> str:
+    MOIS = {"Jan":"janv.", "Feb":"févr.", "Mar":"mars", "Apr":"avr.",
+            "May":"mai", "Jun":"juin", "Jul":"juil.", "Aug":"août",
+            "Sep":"sept.", "Oct":"oct.", "Nov":"nov.", "Dec":"déc."}
+    if pd.isna(d):
+        return "—"
+    s = d.strftime("%d %b %Y")
+    for en, fr in MOIS.items():
+        s = s.replace(en, fr)
+    return s
 
 
-def bloc_mini_kpi(items):
-    """items = [(label, value), ...]"""
+def html_row_insider(row):
+    """Ligne pour une transaction d'insider (corporate)."""
+    is_buy = row["change"] > 0
+    ico = "↑" if is_buy else "↓"
+    cls = "ico-buy" if is_buy else "ico-sell"
+    sens = "A acheté" if is_buy else "A vendu"
+    entreprise = WATCHLIST.get(row["symbol"], row["symbol"])
+    return f"""
+    <div class="row">
+        <div class="row-icon {cls}">{ico}</div>
+        <div class="row-main">
+            <div class="row-name">{row['name']}</div>
+            <div class="row-sub">{sens} des actions {entreprise}</div>
+        </div>
+        <div class="row-chip">{row['symbol']}</div>
+        <div>
+            <div class="row-amount">${fmt_num(row['montant'])}</div>
+            <div class="row-date">{fmt_date(row['transactionDate'])}</div>
+        </div>
+    </div>
+    """
+
+
+def html_row_congress(row):
+    """Ligne pour un trade du Congrès."""
+    ttype = (row.get("type") or "").lower()
+    is_buy = "purchase" in ttype
+    ico = "↑" if is_buy else "↓"
+    cls = "ico-buy" if is_buy else "ico-sell"
+    sens = "A acheté" if is_buy else "A vendu"
+    ticker = row.get("ticker") or "—"
+    chamber = (row.get("chamber") or "").capitalize() or "Congrès"
+    state = row.get("state") or ""
+    return f"""
+    <div class="row">
+        <div class="row-icon {cls}">{ico}</div>
+        <div class="row-main">
+            <div class="row-name">{row.get('member', '—')}</div>
+            <div class="row-sub">{sens} · {chamber} · {state}</div>
+        </div>
+        <div class="row-chip">{ticker}</div>
+        <div>
+            <div class="row-amount">${fmt_num(row['montant_est'])}</div>
+            <div class="row-date">{fmt_date(row['transaction_date'])}</div>
+        </div>
+    </div>
+    """
+
+
+def html_mini_kpis(items):
     html = '<div class="mini-grid">'
     for lbl, val in items:
-        html += f'<div class="mini-kpi"><div class="mini-lbl">{lbl}</div><div class="mini-val">{val}</div></div>'
-    html += '</div>'
-    st.markdown(html, unsafe_allow_html=True)
+        html += f'<div class="mini"><div class="mini-lbl">{lbl}</div><div class="mini-val">{val}</div></div>'
+    return html + '</div>'
 
 
-def details_transaction(row):
-    """Panneau de détails pour UNE transaction (dans un expander)."""
-    sens = "Achat" if row["change"] > 0 else "Vente"
-    couleur = "🟢" if row["change"] > 0 else "🔴"
-    bloc_mini_kpi([
-        ("Sens", f"{couleur} {sens}"),
-        ("Actions", f"{int(row['change']):+,}"),
-        ("Prix unitaire", f"${row['transactionPrice']:,.2f}"),
-        ("Montant", f"${row['montant']:,.0f}"),
-        ("Détention après op.", f"{int(row['share']):,}"),
-        ("Date", date_fr(row["transactionDate"])),
-    ])
-    nom_ent = WATCHLIST.get(row["symbol"], row["symbol"])
-    st.caption(f"📄 Déclaration officielle SEC (Form 4) · {row['name']} · {nom_ent} ({row['symbol']})")
+def html_tx_item(sens, main, sub, ticker, montant, date):
+    is_buy = "achat" in sens.lower() or "purchase" in sens.lower()
+    arrow = "↑" if is_buy else "↓"
+    color = "var(--green)" if is_buy else "var(--red)"
+    return f"""
+    <div class="tx-item">
+        <div class="tx-arrow" style="color:{color}">{arrow}</div>
+        <div>
+            <div class="tx-info">{main}</div>
+            <div class="tx-info-sub">{sub}</div>
+        </div>
+        <div class="tx-ticker-sm">{ticker}</div>
+        <div style="text-align:right;">
+            <div class="tx-amt">${fmt_num(montant)}</div>
+            <div class="row-date">{date}</div>
+        </div>
+    </div>
+    """
 
 
-def details_insider(nom: str, df_all: pd.DataFrame):
-    """Panneau de détails pour UN insider : toutes ses transactions."""
-    sous = df_all[df_all["name"] == nom].copy()
-    volume = sous["montant"].sum()
-    nb_tx = len(sous)
-    achats = (sous["change"] > 0).sum()
-    ventes = (sous["change"] < 0).sum()
-    entreprises = ", ".join(sorted(set(sous["symbol"])))
-    net = int(sous["change"].sum())
-
-    bloc_mini_kpi([
-        ("Volume total", f"${format_nombre(volume)}"),
-        ("Transactions", f"{nb_tx}"),
-        ("Achats", f"🟢 {achats}"),
-        ("Ventes", f"🔴 {ventes}"),
-        ("Flux net", f"{net:+,}"),
-        ("Entreprises", entreprises),
-    ])
-
-    tab = pd.DataFrame({
-        "Ticker": sous["symbol"],
-        "Sens": sous["change"].apply(lambda x: "▲ Achat" if x > 0 else "▼ Vente"),
-        "Actions": sous["change"].astype(int).apply(lambda x: f"{x:+,}"),
-        "Prix": sous["transactionPrice"].apply(lambda x: f"${x:,.2f}"),
-        "Montant": sous["montant"].apply(lambda x: f"${x:,.0f}"),
-        "Date": sous["transactionDate"].dt.strftime("%d %b %Y"),
-    })
-    st.dataframe(tab, use_container_width=True, hide_index=True, height=min(300, 50 + 36 * len(tab)))
-
-
-def details_entreprise(symbole: str, df_all: pd.DataFrame):
-    """Panneau de détails pour UNE entreprise."""
-    sous = df_all[df_all["symbol"] == symbole].copy()
-    volume = sous["montant"].sum()
-    nb_tx = len(sous)
-    nb_insiders = sous["name"].nunique()
-    achats = (sous["change"] > 0).sum()
-    ventes = (sous["change"] < 0).sum()
-    net = int(sous["change"].sum())
-
-    bloc_mini_kpi([
-        ("Volume cumulé", f"${format_nombre(volume)}"),
-        ("Transactions", f"{nb_tx}"),
-        ("Dirigeants", f"{nb_insiders}"),
-        ("Achats", f"🟢 {achats}"),
-        ("Ventes", f"🔴 {ventes}"),
-        ("Flux net", f"{net:+,}"),
-    ])
-
-    st.markdown("**Dirigeants impliqués**")
-    top_in = (
-        sous.groupby("name")
-            .agg(nb=("name", "size"), vol=("montant", "sum"))
-            .sort_values("vol", ascending=False)
-            .head(10)
+def activity_chart(dates_series, title=""):
+    """Petit chart : nombre de transactions par jour."""
+    if dates_series.empty:
+        return
+    counts = (
+        dates_series.dropna()
+        .dt.floor("D")
+        .value_counts()
+        .sort_index()
+        .tail(30)
     )
-    tab_in = pd.DataFrame({
-        "Dirigeant": top_in.index,
-        "Transactions": top_in["nb"].values,
-        "Volume": [f"${format_nombre(v)}" for v in top_in["vol"].values],
-    })
-    st.dataframe(tab_in, use_container_width=True, hide_index=True, height=min(300, 50 + 36 * len(tab_in)))
-
-    st.markdown("**Historique complet**")
-    tab = pd.DataFrame({
-        "Dirigeant": sous["name"],
-        "Sens": sous["change"].apply(lambda x: "▲ Achat" if x > 0 else "▼ Vente"),
-        "Actions": sous["change"].astype(int).apply(lambda x: f"{x:+,}"),
-        "Prix": sous["transactionPrice"].apply(lambda x: f"${x:,.2f}"),
-        "Montant": sous["montant"].apply(lambda x: f"${x:,.0f}"),
-        "Date": sous["transactionDate"].dt.strftime("%d %b %Y"),
-    })
-    st.dataframe(tab, use_container_width=True, hide_index=True, height=min(400, 50 + 36 * len(tab)))
+    if counts.empty:
+        return
+    df_chart = pd.DataFrame({"Date": counts.index, "Transactions": counts.values})
+    df_chart = df_chart.set_index("Date")
+    st.bar_chart(df_chart, height=160, use_container_width=True, color="#63c4ff")
 
 
 # ============================================================
@@ -387,11 +595,20 @@ st.markdown(
     """
     <div class="app-header">
         <div class="brand">
-            <div class="logo">🛡️</div>
+            <div class="brand-logo">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#63c4ff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2L4 6v6c0 5 3.5 9.5 8 10 4.5-0.5 8-5 8-10V6l-8-4z"/>
+                    <path d="M12 8v5"/>
+                </svg>
+            </div>
             <div>
                 <div class="brand-name">SENTINELLE</div>
-                <div class="brand-tag">INSIDER TRACKER</div>
+                <div class="brand-tag">INSIDER · TRACKER</div>
             </div>
+        </div>
+        <div class="status-pill">
+            <span class="status-dot"></span>
+            DONNÉES EN DIRECT
         </div>
     </div>
     """,
@@ -407,9 +624,9 @@ if API_KEY == "A_REMPLIR":
 # ============================================================
 # ONGLETS
 # ============================================================
-tab_accueil, tab_insiders, tab_tickers, tab_recherche = st.tabs(
-    ["🏠 Accueil", "👥 Insiders", "🏢 Entreprises", "🔍 Recherche"]
-)
+tab_accueil, tab_dirigeants, tab_elus, tab_entreprises, tab_recherche = st.tabs([
+    "Accueil", "Dirigeants", "Élus US", "Entreprises", "Recherche"
+])
 
 
 # ============================================================
@@ -418,150 +635,316 @@ tab_accueil, tab_insiders, tab_tickers, tab_recherche = st.tabs(
 with tab_accueil:
     st.markdown(
         """
-        <div class="accueil-hero">
-            <div class="accueil-titre">Les mouvements qui comptent,<br>avant tout le monde.</div>
-            <div class="accueil-subtitre">Suivez les transactions des dirigeants des plus grandes entreprises cotées — cliquez sur chaque ligne pour les détails.</div>
+        <div class="hero">
+            <div class="hero-eyebrow">⚡ Flux officiel · SEC + Congrès US</div>
+            <div class="hero-title">L'intelligence du capital, sans le bruit.</div>
+            <div class="hero-sub">Suivez les mouvements qui comptent — déclarations officielles des dirigeants d'entreprises cotées et des membres du Congrès américain — avant que le marché ne les intègre.</div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    df_all = recuperer_toute_watchlist(API_KEY)
+    df_insiders = fetch_all_insiders(API_KEY)
+    df_congress = fetch_congress_trades(100)
 
-    if df_all.empty:
-        st.warning("Aucune donnée disponible pour le moment.")
-    else:
-        total_tx = len(df_all)
-        volume_global = df_all["montant"].sum()
-        nb_insiders_uniques = df_all["name"].nunique()
-        nb_entreprises = df_all["symbol"].nunique()
-        achats_g = (df_all["change"] > 0).sum()
-        ventes_g = (df_all["change"] < 0).sum()
-        ratio = (achats_g / max(ventes_g, 1))
+    # Stats globales
+    vol_i = df_insiders["montant"].sum() if not df_insiders.empty else 0
+    vol_c = df_congress["montant_est"].sum() if not df_congress.empty else 0
+    nb_i = df_insiders["name"].nunique() if not df_insiders.empty else 0
+    nb_c = df_congress["member"].nunique() if not df_congress.empty else 0
 
+    st.markdown(
+        f"""
+        <div class="stat-grid">
+            <div class="stat-tile">
+                <div class="stat-tile-label">Volume dirigeants</div>
+                <div class="stat-tile-value">${fmt_num(vol_i)}</div>
+                <div class="stat-tile-delta">{nb_i} dirigeants actifs</div>
+            </div>
+            <div class="stat-tile">
+                <div class="stat-tile-label">Volume élus US</div>
+                <div class="stat-tile-value">${fmt_num(vol_c)}</div>
+                <div class="stat-tile-delta">{nb_c} membres du Congrès</div>
+            </div>
+            <div class="stat-tile">
+                <div class="stat-tile-label">Transactions suivies</div>
+                <div class="stat-tile-value">{len(df_insiders) + len(df_congress):,}</div>
+                <div class="stat-tile-delta">90 derniers jours</div>
+            </div>
+            <div class="stat-tile">
+                <div class="stat-tile-label">Entreprises couvertes</div>
+                <div class="stat-tile-value">{len(WATCHLIST)}</div>
+                <div class="stat-tile-delta">watchlist S&P</div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # --- Gros mouvements dirigeants ---
+    if not df_insiders.empty:
         st.markdown(
-            f"""
-            <div class="kpi-grid">
-                <div class="kpi-card">
-                    <div class="kpi-lbl">Transactions suivies</div>
-                    <div class="kpi-val">{total_tx:,}</div>
-                    <div class="kpi-sub">sur {nb_entreprises} entreprises</div>
-                </div>
-                <div class="kpi-card">
-                    <div class="kpi-lbl">Volume échangé</div>
-                    <div class="kpi-val">${format_nombre(volume_global)}</div>
-                    <div class="kpi-sub">cumul watchlist</div>
-                </div>
-                <div class="kpi-card">
-                    <div class="kpi-lbl">Dirigeants actifs</div>
-                    <div class="kpi-val">{nb_insiders_uniques}</div>
-                    <div class="kpi-sub">tous tickers</div>
-                </div>
-                <div class="kpi-card">
-                    <div class="kpi-lbl">Ratio Achats/Ventes</div>
-                    <div class="kpi-val">{ratio:.2f}</div>
-                    <div class="kpi-sub"><span class="vert">▲ {achats_g}</span> · <span class="rouge">▼ {ventes_g}</span></div>
-                </div>
+            """
+            <div class="section-head">
+                <div class="section-title">🔥 Gros mouvements — dirigeants</div>
+                <div class="section-meta">Top 6 par montant</div>
             </div>
             """,
             unsafe_allow_html=True,
         )
+        top_insiders = df_insiders.sort_values("montant", ascending=False).head(6)
+        for _, row in top_insiders.iterrows():
+            st.markdown(html_row_insider(row), unsafe_allow_html=True)
 
-        # --- Gros mouvements récents ---
-        st.markdown('<div class="sec-eyebrow">— À la une</div>', unsafe_allow_html=True)
-        st.markdown('<div class="sec-title">🔥 Gros mouvements récents</div>', unsafe_allow_html=True)
+    # --- Gros mouvements élus ---
+    if not df_congress.empty:
+        st.markdown(
+            """
+            <div class="section-head">
+                <div class="section-title">🏛️ Gros mouvements — élus US</div>
+                <div class="section-meta">Top 6 par montant estimé</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        top_congress = df_congress.sort_values("montant_est", ascending=False).head(6)
+        for _, row in top_congress.iterrows():
+            st.markdown(html_row_congress(row), unsafe_allow_html=True)
 
-        gros = df_all.sort_values("montant", ascending=False).head(10).reset_index(drop=True)
-        for i, row in gros.iterrows():
-            flag = "🟢 ACHAT" if row["change"] > 0 else "🔴 VENTE"
-            label = f"{flag}  ·  {row['name']}  ·  {row['symbol']}  ·  ${format_nombre(row['montant'])}  ·  {date_fr(row['transactionDate'])}"
-            with st.expander(label):
-                details_transaction(row)
-
-        # --- Dernières déclarations ---
-        st.markdown('<div class="sec-eyebrow">— Flux en direct</div>', unsafe_allow_html=True)
-        st.markdown('<div class="sec-title">⏱️ Dernières déclarations</div>', unsafe_allow_html=True)
-
-        recents = df_all.dropna(subset=["transactionDate"]).sort_values("transactionDate", ascending=False).head(10).reset_index(drop=True)
-        for i, row in recents.iterrows():
-            flag = "🟢" if row["change"] > 0 else "🔴"
-            label = f"{flag}  {date_fr(row['transactionDate'])}  ·  {row['name']}  ·  {row['symbol']}  ·  ${format_nombre(row['montant'])}"
-            with st.expander(label):
-                details_transaction(row)
+    # --- Chart activité ---
+    if not df_insiders.empty or not df_congress.empty:
+        st.markdown(
+            """
+            <div class="section-head">
+                <div class="section-title">📊 Activité sur 30 jours</div>
+                <div class="section-meta">Transactions par jour</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        all_dates = pd.concat([
+            df_insiders["transactionDate"] if not df_insiders.empty else pd.Series(dtype="datetime64[ns]"),
+            df_congress["transaction_date"] if not df_congress.empty else pd.Series(dtype="datetime64[ns]"),
+        ])
+        activity_chart(all_dates)
 
 
 # ============================================================
-# INSIDERS
+# DIRIGEANTS
 # ============================================================
-with tab_insiders:
+with tab_dirigeants:
     st.markdown(
         """
-        <div class="accueil-hero">
-            <div class="accueil-titre">Les grands noms.</div>
-            <div class="accueil-subtitre">Cliquez sur un dirigeant pour voir le détail de toutes ses opérations.</div>
+        <div class="hero">
+            <div class="hero-eyebrow">👔 CORPORATE INSIDERS</div>
+            <div class="hero-title">Les grands noms des conseils d'administration.</div>
+            <div class="hero-sub">Dirigeants les plus actifs de la watchlist. Cliquez sur une carte pour voir le détail de leurs transactions, entreprise par entreprise.</div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    df_all = recuperer_toute_watchlist(API_KEY)
-
+    df_all = fetch_all_insiders(API_KEY)
     if df_all.empty:
         st.warning("Aucune donnée disponible.")
     else:
-        top_insiders = (
+        top_i = (
             df_all.groupby("name")
-                  .agg(
-                      nb_tx=("name", "size"),
-                      volume=("montant", "sum"),
-                      entreprises=("symbol", lambda s: ", ".join(sorted(set(s)))),
-                  )
-                  .sort_values("volume", ascending=False)
-                  .head(25)
-                  .reset_index()
+                  .agg(nb=("name","size"), vol=("montant","sum"),
+                       entr=("symbol", lambda s: sorted(set(s))))
+                  .sort_values("vol", ascending=False).head(25).reset_index()
         )
 
-        for _, row in top_insiders.iterrows():
-            label = f"👤  {row['name']}  ·  {row['entreprises']}  ·  ${format_nombre(row['volume'])}  ·  {row['nb_tx']} tx"
+        for _, row in top_i.iterrows():
+            tickers = ", ".join(row["entr"])
+            label = f"👤   {row['name']}   ·   ${fmt_num(row['vol'])}   ·   {row['nb']} transactions"
             with st.expander(label):
-                details_insider(row["name"], df_all)
+                sub = df_all[df_all["name"] == row["name"]].copy()
+                achats = (sub["change"] > 0).sum()
+                ventes = (sub["change"] < 0).sum()
+                net = int(sub["change"].sum())
+
+                st.markdown(
+                    html_mini_kpis([
+                        ("Volume", f"${fmt_num(row['vol'])}"),
+                        ("Transactions", f"{row['nb']}"),
+                        ("Achats", f"🟢 {achats}"),
+                        ("Ventes", f"🔴 {ventes}"),
+                        ("Flux net", f"{net:+,}"),
+                        ("Entreprises", tickers),
+                    ]),
+                    unsafe_allow_html=True,
+                )
+
+                # Chart activité
+                activity_chart(sub["transactionDate"])
+
+                # Liste des transactions (compactes)
+                st.markdown("<div style='margin-top:1rem; font-weight:600; color:#cbd5e1; font-size:0.85rem;'>Détail des opérations</div>", unsafe_allow_html=True)
+                for _, t in sub.sort_values("transactionDate", ascending=False).head(15).iterrows():
+                    sens = "Achat" if t["change"] > 0 else "Vente"
+                    nom_ent = WATCHLIST.get(t["symbol"], t["symbol"])
+                    st.markdown(
+                        html_tx_item(
+                            sens,
+                            f"{sens} — {nom_ent}",
+                            f"{int(t['change']):+,} actions à ${t['transactionPrice']:,.2f}",
+                            t["symbol"],
+                            t["montant"],
+                            fmt_date(t["transactionDate"]),
+                        ),
+                        unsafe_allow_html=True,
+                    )
+
+                if row["nb"] > 15:
+                    st.caption(f"… et {row['nb'] - 15} transactions plus anciennes")
+
+
+# ============================================================
+# ÉLUS US
+# ============================================================
+with tab_elus:
+    st.markdown(
+        """
+        <div class="hero">
+            <div class="hero-eyebrow">🏛️ CONGRÈS US · STOCK Act</div>
+            <div class="hero-title">Ce que les sénateurs et représentants achètent.</div>
+            <div class="hero-sub">Déclarations officielles des membres du Congrès américain (House + Senate) sur les 90 derniers jours. Cliquez sur un élu pour voir tous ses trades, toutes entreprises confondues.</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    df_c = fetch_congress_trades(100)
+    if df_c.empty:
+        st.warning("Données du Congrès temporairement indisponibles (rate-limit Bargo API). Réessayez dans quelques minutes.")
+    else:
+        # Classement des élus par volume
+        top_m = (
+            df_c.groupby("member")
+                .agg(
+                    nb=("member","size"),
+                    vol=("montant_est","sum"),
+                    chamber=("chamber","first"),
+                    state=("state","first"),
+                    tickers=("ticker", lambda s: sorted(set(x for x in s if x))),
+                )
+                .sort_values("vol", ascending=False)
+                .head(25).reset_index()
+        )
+
+        # Chart global : répartition house / senate
+        chambre_counts = df_c["chamber"].value_counts()
+
+        for _, row in top_m.iterrows():
+            chamber_ico = "🏛️" if (row["chamber"] or "").lower() == "senate" else "🏢"
+            label = f"{chamber_ico}   {row['member']}   ·   {(row['chamber'] or '').capitalize()} {row['state']}   ·   ${fmt_num(row['vol'])}   ·   {row['nb']} trades"
+
+            with st.expander(label):
+                sub = df_c[df_c["member"] == row["member"]].copy()
+                achats = sub["type"].str.lower().str.contains("purchase", na=False).sum()
+                ventes = sub["type"].str.lower().str.contains("sale", na=False).sum()
+                tickers_list = ", ".join(row["tickers"][:6])
+                if len(row["tickers"]) > 6:
+                    tickers_list += f" (+{len(row['tickers'])-6})"
+
+                st.markdown(
+                    html_mini_kpis([
+                        ("Volume estimé", f"${fmt_num(row['vol'])}"),
+                        ("Trades", f"{row['nb']}"),
+                        ("Achats", f"🟢 {achats}"),
+                        ("Ventes", f"🔴 {ventes}"),
+                        ("Chambre", (row["chamber"] or "—").capitalize()),
+                        ("Tickers tradés", f"{len(row['tickers'])}"),
+                    ]),
+                    unsafe_allow_html=True,
+                )
+
+                activity_chart(sub["transaction_date"])
+
+                st.markdown(f"<div style='margin-top:1rem; font-weight:600; color:#cbd5e1; font-size:0.85rem;'>Détail des trades · {tickers_list}</div>", unsafe_allow_html=True)
+                for _, t in sub.sort_values("transaction_date", ascending=False).head(15).iterrows():
+                    ttype = (t.get("type") or "").lower()
+                    sens = "Achat" if "purchase" in ttype else "Vente"
+                    asset = t.get("asset") or t.get("ticker") or "—"
+                    st.markdown(
+                        html_tx_item(
+                            sens,
+                            f"{sens} — {asset}",
+                            f"Déclaré le {fmt_date(t['disclosure_date'])}",
+                            t.get("ticker") or "—",
+                            t["montant_est"],
+                            fmt_date(t["transaction_date"]),
+                        ),
+                        unsafe_allow_html=True,
+                    )
+
+                if row["nb"] > 15:
+                    st.caption(f"… et {row['nb'] - 15} trades plus anciens (données Bargo limitées aux 90 derniers jours)")
 
 
 # ============================================================
 # ENTREPRISES
 # ============================================================
-with tab_tickers:
+with tab_entreprises:
     st.markdown(
         """
-        <div class="accueil-hero">
-            <div class="accueil-titre">Watchlist.</div>
-            <div class="accueil-subtitre">Cliquez sur une entreprise pour voir son activité insider détaillée.</div>
+        <div class="hero">
+            <div class="hero-eyebrow">🏢 WATCHLIST</div>
+            <div class="hero-title">Les entreprises sous radar.</div>
+            <div class="hero-sub">Trente grandes capitalisations américaines suivies en continu. Cliquez pour explorer l'activité insider par entreprise.</div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    df_all = recuperer_toute_watchlist(API_KEY)
-
+    df_all = fetch_all_insiders(API_KEY)
     if df_all.empty:
-        st.warning("Aucune donnée disponible.")
+        st.warning("Aucune donnée.")
     else:
-        par_entreprise = (
+        agg = (
             df_all.groupby("symbol")
-                  .agg(
-                      nb_tx=("symbol", "size"),
-                      volume=("montant", "sum"),
-                      nb_insiders=("name", "nunique"),
-                  )
-                  .sort_values("volume", ascending=False)
-                  .reset_index()
+                  .agg(nb=("symbol","size"), vol=("montant","sum"),
+                       inside=("name","nunique"))
+                  .sort_values("vol", ascending=False).reset_index()
         )
 
-        for _, row in par_entreprise.iterrows():
+        for _, row in agg.iterrows():
             nom = WATCHLIST.get(row["symbol"], row["symbol"])
-            label = f"🏢  {row['symbol']}  ·  {nom}  ·  ${format_nombre(row['volume'])}  ·  {row['nb_insiders']} dirigeants  ·  {row['nb_tx']} tx"
+            label = f"🏢   {row['symbol']}   ·   {nom}   ·   ${fmt_num(row['vol'])}   ·   {row['inside']} dirigeants"
             with st.expander(label):
-                details_entreprise(row["symbol"], df_all)
+                sub = df_all[df_all["symbol"] == row["symbol"]].copy()
+                achats = (sub["change"] > 0).sum()
+                ventes = (sub["change"] < 0).sum()
+
+                st.markdown(
+                    html_mini_kpis([
+                        ("Volume", f"${fmt_num(row['vol'])}"),
+                        ("Transactions", f"{row['nb']}"),
+                        ("Dirigeants", f"{row['inside']}"),
+                        ("Achats", f"🟢 {achats}"),
+                        ("Ventes", f"🔴 {ventes}"),
+                        ("Prix moyen", f"${sub['transactionPrice'].mean():,.2f}"),
+                    ]),
+                    unsafe_allow_html=True,
+                )
+
+                activity_chart(sub["transactionDate"])
+
+                st.markdown("<div style='margin-top:1rem; font-weight:600; color:#cbd5e1; font-size:0.85rem;'>Dernières opérations</div>", unsafe_allow_html=True)
+                for _, t in sub.head(12).iterrows():
+                    sens = "Achat" if t["change"] > 0 else "Vente"
+                    st.markdown(
+                        html_tx_item(
+                            sens,
+                            f"{t['name']}",
+                            f"{int(t['change']):+,} actions à ${t['transactionPrice']:,.2f}",
+                            t["symbol"],
+                            t["montant"],
+                            fmt_date(t["transactionDate"]),
+                        ),
+                        unsafe_allow_html=True,
+                    )
 
 
 # ============================================================
@@ -570,90 +953,108 @@ with tab_tickers:
 with tab_recherche:
     st.markdown(
         """
-        <div class="accueil-hero">
-            <div class="accueil-titre">Analyse d'un ticker.</div>
-            <div class="accueil-subtitre">Saisissez un symbole boursier (pas forcément dans la watchlist) pour voir toute son activité insider.</div>
+        <div class="hero">
+            <div class="hero-eyebrow">🔍 RECHERCHE</div>
+            <div class="hero-title">Analysez n'importe quel ticker.</div>
+            <div class="hero-sub">Entrez un symbole boursier (même hors watchlist) pour voir l'activité complète de ses dirigeants.</div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    col_input, col_bouton = st.columns([4, 1])
-    with col_input:
-        ticker_saisi = st.text_input(
-            "Ticker",
-            value="AAPL",
-            max_chars=10,
-            placeholder="AAPL, MSFT, TSLA...",
-            label_visibility="collapsed",
-        )
-    with col_bouton:
-        if st.button("🔄 Actualiser", use_container_width=True):
+    col_in, col_btn = st.columns([4, 1])
+    with col_in:
+        saisi = st.text_input("Ticker", value="AAPL", max_chars=10,
+                              placeholder="AAPL, MSFT, TSLA…",
+                              label_visibility="collapsed")
+    with col_btn:
+        if st.button("Actualiser", use_container_width=True):
             st.cache_data.clear()
             st.rerun()
 
-    ticker = ticker_saisi.strip().upper()
+    ticker = saisi.strip().upper()
     if not ticker:
-        st.info("Saisissez un ticker pour afficher l'analyse.")
+        st.info("Saisissez un ticker.")
         st.stop()
 
-    df = recuperer_transactions(ticker, API_KEY)
+    df = fetch_insider_tx(ticker, API_KEY)
     if df.empty:
         st.warning(f"Aucune transaction trouvée pour **{ticker}**.")
         st.stop()
 
-    nb_tx = len(df)
+    nb = len(df)
     nb_in = df["name"].nunique()
     vol = df["montant"].sum()
+    achats = (df["change"] > 0).sum()
+    ventes = (df["change"] < 0).sum()
     net = int(df["change"].sum())
-    achats_t = (df["change"] > 0).sum()
-    ventes_t = (df["change"] < 0).sum()
-    derniere = df["transactionDate"].max()
-    derniere_str = date_fr(derniere)
-    sens_cls = "vert" if net >= 0 else "rouge"
-    sens_signe = "+" if net >= 0 else ""
+    net_cls = "pos" if net >= 0 else "neg"
+    net_sgn = "+" if net >= 0 else ""
 
     st.markdown(
         f"""
-        <div class="kpi-grid">
-            <div class="kpi-card">
-                <div class="kpi-lbl">Transactions</div>
-                <div class="kpi-val">{nb_tx}</div>
-                <div class="kpi-sub"><span class="vert">▲ {achats_t}</span> · <span class="rouge">▼ {ventes_t}</span></div>
+        <div class="stat-grid">
+            <div class="stat-tile">
+                <div class="stat-tile-label">Transactions</div>
+                <div class="stat-tile-value">{nb}</div>
+                <div class="stat-tile-delta"><span class="pos">↑ {achats}</span> · <span class="neg">↓ {ventes}</span></div>
             </div>
-            <div class="kpi-card">
-                <div class="kpi-lbl">Dirigeants</div>
-                <div class="kpi-val">{nb_in}</div>
-                <div class="kpi-sub">impliqués</div>
+            <div class="stat-tile">
+                <div class="stat-tile-label">Dirigeants</div>
+                <div class="stat-tile-value">{nb_in}</div>
+                <div class="stat-tile-delta">impliqués</div>
             </div>
-            <div class="kpi-card">
-                <div class="kpi-lbl">Volume</div>
-                <div class="kpi-val">${format_nombre(vol)}</div>
-                <div class="kpi-sub">cumul</div>
+            <div class="stat-tile">
+                <div class="stat-tile-label">Volume</div>
+                <div class="stat-tile-value">${fmt_num(vol)}</div>
+                <div class="stat-tile-delta">cumul période</div>
             </div>
-            <div class="kpi-card">
-                <div class="kpi-lbl">Flux net</div>
-                <div class="kpi-val {sens_cls}">{sens_signe}{format_nombre(net)}</div>
-                <div class="kpi-sub">actions</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-lbl">Dernière</div>
-                <div class="kpi-val" style="font-size:1.3rem;">{derniere_str}</div>
-                <div class="kpi-sub">déclaration</div>
+            <div class="stat-tile">
+                <div class="stat-tile-label">Flux net</div>
+                <div class="stat-tile-value {net_cls}">{net_sgn}{fmt_num(net)}</div>
+                <div class="stat-tile-delta">actions nettes</div>
             </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    st.markdown('<div class="sec-eyebrow">— Transactions</div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="sec-title">Cliquez sur une opération pour les détails</div>', unsafe_allow_html=True)
+    st.markdown(
+        f"""
+        <div class="section-head">
+            <div class="section-title">📈 Activité {ticker}</div>
+            <div class="section-meta">30 derniers jours</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    activity_chart(df["transactionDate"])
+
+    st.markdown(
+        """
+        <div class="section-head">
+            <div class="section-title">📋 Toutes les transactions</div>
+            <div class="section-meta">cliquez pour les détails</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     for _, row in df.iterrows():
-        flag = "🟢 ACHAT" if row["change"] > 0 else "🔴 VENTE"
-        label = f"{flag}  ·  {row['name']}  ·  ${format_nombre(row['montant'])}  ·  {date_fr(row['transactionDate'])}"
+        sens = "Achat" if row["change"] > 0 else "Vente"
+        label = f"{'🟢' if row['change']>0 else '🔴'}   {row['name']}   ·   {sens}   ·   ${fmt_num(row['montant'])}   ·   {fmt_date(row['transactionDate'])}"
         with st.expander(label):
-            details_transaction(row)
+            st.markdown(
+                html_mini_kpis([
+                    ("Sens", f"{'🟢 Achat' if row['change']>0 else '🔴 Vente'}"),
+                    ("Actions", f"{int(row['change']):+,}"),
+                    ("Prix unitaire", f"${row['transactionPrice']:,.2f}"),
+                    ("Montant", f"${row['montant']:,.0f}"),
+                    ("Détention après", f"{int(row['share']):,}"),
+                    ("Date", fmt_date(row['transactionDate'])),
+                ]),
+                unsafe_allow_html=True,
+            )
 
 
 # ============================================================
@@ -661,8 +1062,9 @@ with tab_recherche:
 # ============================================================
 st.markdown(
     """
-    <div class="footer-note">
-        Données officielles SEC · fournies par Finnhub<br>
+    <div class="footer">
+        <div class="footer-brand">SENTINELLE</div>
+        Données officielles SEC Form 4 (Finnhub) · Bargo API pour le Congrès US<br>
         Sentinelle est un outil informatif et ne constitue pas un conseil en investissement.
     </div>
     """,
