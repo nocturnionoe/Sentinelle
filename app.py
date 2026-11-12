@@ -304,6 +304,7 @@ def cell_var(row) -> str:
 # ================================================================
 # SEC EDGAR — PORTEFEUILLES 13F
 # ================================================================
+_ERREURS_SEC: list[str] = []  # dernières erreurs rencontrées, affichées si rien ne charge
 _sec_lock = threading.Lock()
 _sec_last = [0.0]
 
@@ -371,7 +372,8 @@ def _charger_investisseur(inv) -> dict | None:
         if cur.empty:
             return None
         prev = _lire_depot(cik, depots[1][0]) if len(depots) > 1 else pd.DataFrame()
-    except Exception:
+    except Exception as e:
+        _ERREURS_SEC.append(f"{type(e).__name__} : {e}")
         return None
 
     if prev.empty:
@@ -710,7 +712,10 @@ with t_inv:
                "Chaque trimestre, tout gérant de plus de 100 M$ publie l'intégralité de ses positions en actions "
                "américaines. On y lit ce qu'il détient, ce qu'il vient d'acheter et ce qu'il a vendu.")
     if not PF:
-        st.html('<div class="empty">Données SEC indisponibles.</div>')
+        detail = f"<br><br>Erreur renvoyée : {esc(_ERREURS_SEC[0])}" if _ERREURS_SEC else ""
+        st.html('<div class="empty">Données SEC indisponibles. La SEC refuse les requêtes sans contact '
+                'identifiable : ajoutez <b>SEC_USER_AGENT</b> dans les Secrets Streamlit, au format '
+                f'« Nom adresse@mail ».{detail}</div>')
     else:
         ordre = sorted(PF.values(), key=lambda p: -p["total"])
         cles = [p["cle"] for p in ordre]
